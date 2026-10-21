@@ -16,18 +16,21 @@ class MainApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+
+    final viewModel = ArticleViewModel(ArticleModel());
+
     return MaterialApp(
       home: Scaffold(
         appBar: AppBar(title: const Text("Wiki Flutt")),
         body: const Center(
-          child: Text('Mogged....'),
+          child: Text('Check console for article data.'),
         ),
       ),
     );
   }
 }
 
-class ArticleMode {
+class ArticleModel {
   Future<Summary> getRandomArticleSummary() async {
     final uri = Uri.https(
       'en.wikipedia.org',
@@ -42,4 +45,31 @@ class ArticleMode {
     return Summary.fromJson(jsonDecode(response.body) as Map<String, Object?>);
   } 
 
+}
+
+class ArticleViewModel extends ChangeNotifier {
+  final ArticleModel model;
+  Summary? summary;
+  Exception? error;
+  bool isLoading = false;
+
+  ArticleViewModel(this.model) {
+    fetchArticle();
+  }
+
+  Future<void> fetchArticle() async {
+    isLoading = true;
+    notifyListeners();
+    try {
+      summary = await model.getRandomArticleSummary();
+      print('Article loaded: ${summary!.title.normalized}');
+      error = null;
+    } on HttpException catch (e){
+      print('Error loading article: ${e.message}');
+      error = e;
+      summary = null;
+    }
+    isLoading = false;
+    notifyListeners();
+  }
 }
